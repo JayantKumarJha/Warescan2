@@ -378,10 +378,22 @@
 
       <div class="pick-progress-bar">
         <div class="pick-progress-top">
-          <span class="pick-progress-label">Pick Progress</span>
+          <span class="pick-progress-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Pick Groups
+          </span>
           <span class="pick-progress-count" id="pickProgressCount">0 / 0</span>
         </div>
         <div class="progress-track"><div class="progress-fill" id="pickProgressFill" style="width:0%"></div></div>
+
+        <div class="pick-progress-top" style="margin-top:10px;">
+          <span class="pick-progress-label">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            Pieces
+          </span>
+          <span class="pick-progress-count" id="pickPcsCount">0 / 0</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="pickPcsFill" style="width:0%;background:var(--blue);"></div></div>
       </div>
 
       <!-- CURRENT TASK CARD -->
@@ -691,6 +703,13 @@ function updatePickUI(){
   const pct=total?Math.round(done/total*100):0;
   document.getElementById('pickProgressCount').textContent=`${done} / ${total}`;
   document.getElementById('pickProgressFill').style.width=pct+'%';
+
+  // Pieces progress — sum totalQty of all groups vs matched-only groups
+  const totalPcs=pickGroups.reduce((s,g)=>s+g.totalQty,0);
+  const donePcs=pickResults.filter(r=>r.status==='Matched').reduce((s,r)=>s+r.totalQty,0);
+  const pcsPct=totalPcs?Math.round(donePcs/totalPcs*100):0;
+  document.getElementById('pickPcsCount').textContent=`${donePcs} / ${totalPcs}`;
+  document.getElementById('pickPcsFill').style.width=pcsPct+'%';
   const matched=pickResults.filter(r=>r.status==='Matched').length;
   const skipped=pickResults.filter(r=>r.status==='Skipped').length;
   document.getElementById('pickStatTotal').textContent=done;
@@ -864,12 +883,14 @@ function addPickLog(g,status,cls,reason){
 function finishPickSession(){
   const m=pickResults.filter(r=>r.status==='Matched').length;
   const s=pickResults.filter(r=>r.status==='Skipped').length;
+  const totalPcs=pickGroups.reduce((sum,g)=>sum+g.totalQty,0);
+  const pickedPcs=pickResults.filter(r=>r.status==='Matched').reduce((sum,r)=>sum+r.totalQty,0);
   document.getElementById('pickActiveState').style.display='none';
   document.getElementById('pickCompleteState').style.display='flex';
   document.getElementById('pickFinalTotal').textContent=pickResults.length;
   document.getElementById('pickFinalMatched').textContent=m;
   document.getElementById('pickFinalSkipped').textContent=s;
-  document.getElementById('pickCompleteSub').textContent=`${m} prepacks confirmed, ${s} skipped out of ${pickGroups.length} total tasks.`;
+  document.getElementById('pickCompleteSub').textContent=`${m} prepacks confirmed (${pickedPcs} pcs), ${s} skipped out of ${pickGroups.length} tasks (${totalPcs} total pcs).`;
   if(pickScanning)stopPickScanner();
 }
 
